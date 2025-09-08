@@ -1,7 +1,7 @@
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
-from retrieval.vector_store import search_topic
+from retrieval.vector_store import search_spinal_fusion_topic
 from utils.config import get_llm
-from workflow.state import DebateState, AgentType
+from workflow.state import ConsultationState, AgentType
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, TypedDict
 from langchain_core.messages import BaseMessage
@@ -11,8 +11,7 @@ from langfuse.callback import CallbackHandler
 
 # 에이전트 내부 상태 타입 정의
 class AgentState(TypedDict):
-
-    debate_state: Dict[str, Any]  # 전체 토론 상태
+    consultation_state: Dict[str, Any]  # 전체 상담 상태
     context: str  # 검색된 컨텍스트
     messages: List[BaseMessage]  # LLM에 전달할 메시지
     response: str  # LLM 응답
@@ -21,7 +20,6 @@ class AgentState(TypedDict):
 # 에이전트 추상 클래스 정의
 class Agent(ABC):
 
-    #
     def __init__(
         self, system_prompt: str, role: str, k: int = 2, session_id: str = None
     ):
@@ -56,111 +54,93 @@ class Agent(ABC):
     def _retrieve_context(self, state: AgentState) -> AgentState:
 
         # k=0이면 검색 비활성화
-        if self.k <= 0:
+        if self.k == 0:
             return {**state, "context": ""}
 
-        debate_state = state["debate_state"]
-        topic = debate_state["topic"]
+        consultation_state = state["consultation_state"]
+        patient_query = consultation_state.get("patient_query", "")
+        consultation_type = consultation_state.get("consultation_type", "일반")
 
-        # 검색 쿼리 생성
-        query = topic
-        if self.role == AgentType.PRO:
-            query += " 찬성 장점 이유 근거"
-        elif self.role == AgentType.CON:
-            query += " 반대 단점 이유 근거"
-        elif self.role == AgentType.JUDGE:
-            query += " 평가 기준 객관적 사실"
-
-        # RAG 서비스를 통해 검색 실행
-        docs = search_topic(topic, self.role, query, k=self.k)  # noqa: F821
-
-        debate_state["docs"][self.role] = (
-            [doc.page_content for doc in docs] if docs else []
+        # 척추 유합술 관련 문서 검색
+        docs = search_spinal_fusion_topic(
+            consultation_type=consultation_type,
+            query=patient_query,
+            k=self.k
         )
 
-        # 컨텍스트 포맷팅
-        context = self._format_context(docs)
-
-        # 상태 업데이트
-        return {**state, "context": context}
-
-    # 검색 결과로 Context 생성
-    def _format_context(self, docs: list) -> str:
-
+        # 검색 결과를 컨텍스트로 변환
         context = ""
-        for i, doc in enumerate(docs):
-            source = doc.metadata.get("source", "Unknown")
-            section = doc.metadata.get("section", "")
-            context += f"[문서 {i + 1}] 출처: {source}"
-            if section:
-                context += f", 섹션: {section}"
-            context += f"\n{doc.page_content}\n\n"
-        return context
+        if docs:
+            context = "\n".join([doc.page_content for doc in docs[:self.k]])
 
-    # 프롬프트 메시지 준비
+        # 상담 상태에 검색 결과 저장
+        new_consultation_state = consultation_state.copy()
+        new_consultation_state["contexts"] = new_consultation_state.get("contexts", {})
+        new_consultation_state["contexts"][self.role] = context
+        new_consultation_state["docs"] = new_consultation_state.get("docs", {})
+        new_consultation_state["docs"][self.role] = docs
+
+        return {**state, "context": context, "consultation_state": new_consultation_state}
+
+    # 메시지 준비
     def _prepare_messages(self, state: AgentState) -> AgentState:
 
-        debate_state = state["debate_state"]
+        consultation_state = state["consultation_state"]
         context = state["context"]
 
-        # 시스템 프롬프트로 시작
-        messages = [SystemMessage(content=self.system_prompt)]
+        # 상담 상태에 컨텍스트 추가
+        consultation_state_with_context = consultation_state.copy()
+        consultation_state_with_context["context"] = context
 
-        # 기존 대화 기록 추가
-        for message in debate_state["messages"]:
-            if message["role"] == "assistant":
-                messages.append(AIMessage(content=message["content"]))
-            else:
-                messages.append(
-                    HumanMessage(content=f"{message['role']}: {message['content']}")
-                )
+        # 프롬프트 생성
+        prompt = self._create_prompt(consultation_state_with_context)
 
-        # 프롬프트 생성 (검색된 컨텍스트 포함)
-        prompt = self._create_prompt({**debate_state, "context": context})
-        messages.append(HumanMessage(content=prompt))
+        # 메시지 구성
+        messages = [
+            SystemMessage(content=self.system_prompt),
+            HumanMessage(content=prompt)
+        ]
 
-        # 상태 업데이트
         return {**state, "messages": messages}
 
-    # 프롬프트 생성 - 하위 클래스에서 구현 필요
-    @abstractmethod
-    def _create_prompt(self, state: Dict[str, Any]) -> str:
-        pass
-
-    # LLM 호출
+    # 응답 생성
     def _generate_response(self, state: AgentState) -> AgentState:
 
         messages = state["messages"]
-        response = get_llm().invoke(messages)
+        llm = get_llm()
 
-        return {**state, "response": response.content}
+        # LLM 호출
+        response = llm.invoke(messages)
+        response_content = response.content if hasattr(response, 'content') else str(response)
+
+        return {**state, "response": response_content}
 
     # 상태 업데이트
     def _update_state(self, state: AgentState) -> AgentState:
-        debate_state = state["debate_state"]
+
+        consultation_state = state["consultation_state"]
         response = state["response"]
-        current_round = debate_state["current_round"]
 
-        # 토론 상태 복사 및 업데이트
-        new_debate_state = debate_state.copy()
+        # 새로운 메시지 추가
+        new_message = {
+            "role": self.role,
+            "content": response,
+            "timestamp": consultation_state.get("current_turn", 0)
+        }
 
-        # 에이전트 응답 추가
-        new_debate_state["messages"].append(
-            {"role": self.role, "content": response, "current_round": current_round}
-        )
-
-        # 이전 노드 정보 업데이트
-        new_debate_state["prev_node"] = self.role
+        # 상담 상태 업데이트
+        new_consultation_state = consultation_state.copy()
+        new_consultation_state["messages"] = new_consultation_state.get("messages", []) + [new_message]
 
         # 상태 업데이트
-        return {**state, "debate_state": new_debate_state}
+        return {**state, "consultation_state": new_consultation_state}
 
-    # 토론 실행
-    def run(self, state: DebateState) -> DebateState:
+    # 상담 실행
+    def run(self, state: ConsultationState) -> ConsultationState:
 
         # 초기 에이전트 상태 구성
         agent_state = AgentState(
-            debate_state=state, context="", messages=[], response=""
+            consultation_state=state, context="", messages=[], response=""
         )
 
         # 내부 그래프 실행
@@ -169,5 +149,10 @@ class Agent(ABC):
             agent_state, config={"callbacks": [langfuse_handler]}
         )
 
-        # 최종 토론 상태 반환
-        return result["debate_state"]
+        # 최종 상담 상태 반환
+        return result["consultation_state"]
+
+    @abstractmethod
+    def _create_prompt(self, state: Dict[str, Any]) -> str:
+        """각 에이전트별 프롬프트 생성 - 하위 클래스에서 구현"""
+        pass
