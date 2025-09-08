@@ -7,23 +7,32 @@ from utils.config import get_llm
 
 
 def improve_search_query(
-    topic: str,
-    role: Literal["PRO_AGENT", "CON_AGENT", "JUDGE_AGENT"] = "JUDGE_AGENT",
+    budget: str,
+    property_type: str,
+    preference1: str,
+    preference2: str,
+    role: Literal["RATIONAL_AGENT", "EMOTIONAL_AGENT", "MEDIATOR_AGENT"] = "MEDIATOR_AGENT",
 ) -> List[str]:
 
-    template = "'{topic}'에 대해 {perspective} 웹검색에 적합한 3개의 검색어를 제안해주세요. 각 검색어는 25자 이내로 작성하고 콤마로 구분하세요. 검색어만 제공하고 설명은 하지 마세요."
+    template = "부동산 매물 검색을 위해 다음 조건에 맞는 3개의 검색어를 제안해주세요. 예산: {budget}, 매물유형: {property_type}, 선호조건1: {preference1}, 선호조건2: {preference2}. {perspective} 각 검색어는 25자 이내로 작성하고 콤마로 구분하세요. 검색어만 제공하고 설명은 하지 마세요."
 
     perspective_map = {
-        "PRO_AGENT": "찬성하는 입장을 뒷받침할 수 있는 사실과 정보를 찾고자 합니다.",
-        "CON_AGENT": "반대하는 입장을 뒷받침할 수 있는 사실과 정보를 찾고자 합니다.",
-        "JUDGE_AGENT": "객관적인 사실과 정보를 찾고자 합니다.",
+        "RATIONAL_AGENT": "이성적이고 현실적인 관점에서 교통, 생활환경, 재정적 안정성을 중시하는 검색어를 제안해주세요.",
+        "EMOTIONAL_AGENT": "감성적이고 로맨틱한 관점에서 삶의 질, 뷰, 편의시설을 중시하는 검색어를 제안해주세요.",
+        "MEDIATOR_AGENT": "균형잡힌 관점에서 객관적인 부동산 정보와 시장 동향을 찾는 검색어를 제안해주세요.",
     }
 
-    prompt = template.format(topic=topic, perspective=perspective_map[role])
+    prompt = template.format(
+        budget=budget, 
+        property_type=property_type, 
+        preference1=preference1, 
+        preference2=preference2,
+        perspective=perspective_map[role]
+    )
 
     messages = [
         SystemMessage(
-            content="당신은 검색 전문가입니다. 주어진 주제에 대해 가장 관련성 높은 검색어를 제안해주세요."
+            content="당신은 부동산 검색 전문가입니다. 주어진 조건에 대해 가장 관련성 높은 검색어를 제안해주세요."
         ),
         HumanMessage(content=prompt),
     ]

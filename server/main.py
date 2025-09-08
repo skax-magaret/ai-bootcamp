@@ -13,8 +13,8 @@ Base.metadata.create_all(bind=engine)
 
 # FastAPI 인스턴스 생성
 app = FastAPI(
-    title="Debate Arena API",
-    description="AI Debate Arena 서비스를 위한 API",
+    title="Real Estate AI Agent API",
+    description="AI 부동산 중개 에이전트 서비스를 위한 API",
     version="0.1.0",
 )
 
