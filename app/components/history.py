@@ -6,7 +6,7 @@ from utils.state_manager import reset_session_state
 
 # 포트 충돌 방지를 위해 환경변수 사용
 API_BASE_URL = os.getenv("API_BASE_URL")
-
+st.w
 
 # API로 부동산 상담 이력 조회
 def fetch_consultation_history():
@@ -15,17 +15,17 @@ def fetch_consultation_history():
         response = requests.get(f"{API_BASE_URL}/real-estate-consultations/")
         if response.status_code == 200:
             consultations = response.json()
-            # API 응답 형식에 맞게 데이터 변환 (id, budget, property_type, date, rounds)
+            # API 응답 형식에 맞게 데이터 변환 (id, budget, property_type, area_range, date, rounds)
             return [
                 (consultation["id"], consultation["budget"], consultation["property_type"], 
-                 consultation["created_at"], consultation["rounds"])
+                 consultation["area_range"], consultation["created_at"], consultation["rounds"])
                 for consultation in consultations
             ]
         else:
             st.error(f"상담 이력 조회 실패: {response.status_code}")
             return []
     except Exception as e:
-        st.error(f"API 호출 오류: {str(e)}")
+        st.error(f"fetch_consultation_history : API 호출 오류: {str(e)}")
         return []
 
 
@@ -38,6 +38,7 @@ def fetch_consultation_by_id(consultation_id):
             consultation = response.json()
             budget = consultation["budget"]
             property_type = consultation["property_type"]
+            area_range = consultation["area_range"]
             # 실제 API 응답 구조에 맞게 변환 필요
             messages = (
                 json.loads(consultation["messages"])
@@ -59,13 +60,13 @@ def fetch_consultation_by_id(consultation_id):
                 if isinstance(consultation.get("additional_options"), str)
                 else consultation.get("additional_options", [])
             )
-            return budget, property_type, messages, docs, recommended_properties, additional_options
+            return budget, property_type, area_range, messages, docs, recommended_properties, additional_options
         else:
             st.error(f"상담 데이터 조회 실패: {response.status_code}")
-            return None, None, None, None, None, None
+            return None, None, None, None, None, None, None
     except Exception as e:
-        st.error(f"API 호출 오류: {str(e)}")
-        return None, None, None, None, None, None
+        st.error(f"fetch_consultation_by_id : API 호출 오류: {str(e)}")
+        return None, None, None, None, None, None, None
 
 
 # API로 상담 삭제
@@ -80,7 +81,7 @@ def delete_consultation_by_id(consultation_id):
             st.error(f"상담 삭제 실패: {response.status_code}")
             return False
     except Exception as e:
-        st.error(f"API 호출 오류: {str(e)}")
+        st.error(f"delete_consultation_by_id : API 호출 오류: {str(e)}")
         return False
 
 
@@ -104,18 +105,19 @@ def delete_all_consultations():
             st.success("모든 상담이 삭제되었습니다.")
         return success
     except Exception as e:
-        st.error(f"API 호출 오류: {str(e)}")
+        st.error(f"delete_all_consultations : API 호출 오류: {str(e)}")
         return False
 
 
 # API로 상담 저장
-def save_consultation(budget, property_type, preference1, preference2, rounds, messages, docs=None, recommended_properties=None, additional_options=None):
+def save_consultation(budget, property_type, area_range, preference1, preference2, rounds, messages, docs=None, recommended_properties=None, additional_options=None):
     """API를 통해 상담 결과를 데이터베이스에 저장"""
     try:
         # API 요청 데이터 준비
         consultation_data = {
             "budget": budget,
             "property_type": property_type,
+            "area_range": area_range,
             "preference1": preference1,
             "preference2": preference2,
             "rounds": rounds,
@@ -148,7 +150,7 @@ def save_consultation(budget, property_type, preference1, preference2, rounds, m
             st.error(f"상담 저장 실패: {response.status_code} - {response.text}")
             return None
     except Exception as e:
-        st.error(f"API 호출 오류: {str(e)}")
+        st.error(f"save_consultation : API 호출 오류: {str(e)}")
         return None
 
 
@@ -177,11 +179,11 @@ def render_history_ui():
 
 # 상담 이력 목록 렌더링
 def render_history_list(consultation_history):
-    for id, budget, property_type, date, rounds in consultation_history:
+    for id, budget, property_type, area_range, date, rounds in consultation_history:
         with st.container(border=True):
 
             # 상담 정보
-            st.write(f"***{budget} | {property_type}***")
+            st.write(f"***{budget} | {property_type} | {area_range}***")
 
             col1, col2, col3 = st.columns([3, 1, 1])
             # 상담 정보
@@ -191,12 +193,13 @@ def render_history_list(consultation_history):
             # 보기 버튼
             with col2:
                 if st.button("보기", key=f"view_{id}", use_container_width=True):
-                    budget, property_type, messages, docs, recommended_properties, additional_options = fetch_consultation_by_id(id)
+                    budget, property_type, area_range, messages, docs, recommended_properties, additional_options = fetch_consultation_by_id(id)
                     if budget and messages:
                         st.session_state.viewing_history = True
                         st.session_state.messages = messages
                         st.session_state.loaded_budget = budget
                         st.session_state.loaded_property_type = property_type
+                        st.session_state.loaded_area_range = area_range
                         st.session_state.loaded_consultation_id = id
                         st.session_state.docs = docs
                         st.session_state.recommended_properties = recommended_properties

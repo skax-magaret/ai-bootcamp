@@ -6,11 +6,11 @@ from utils.config import get_embeddings
 
 
 def get_real_estate_vector_store(
-    budget: str, property_type: str, preference1: str, preference2: str, role: str, language: str = "ko"
+    budget: str, property_type: str, area_range: str, preference1: str, preference2: str, role: str, language: str = "ko"
 ) -> Optional[FAISS]:
 
     # 검색어 개선
-    improved_queries = improve_search_query(budget, property_type, preference1, preference2, role)
+    improved_queries = improve_search_query(budget, property_type, area_range, preference1, preference2, role)
     # 개선된 검색어로 검색 콘텐츠 가져오기
     documents = get_search_content(improved_queries, language)
     if not documents:
@@ -22,9 +22,9 @@ def get_real_estate_vector_store(
         return None
 
 
-def search_real_estate(budget: str, property_type: str, preference1: str, preference2: str, role: str, query: str, k: int = 5) -> List[Dict[str, Any]]:
+def search_real_estate(budget: str, property_type: str, area_range: str, preference1: str, preference2: str, role: str, query: str, k: int = 5) -> List[Dict[str, Any]]:
     # 문서를 검색해서 벡터 스토어 생성
-    vector_store = get_real_estate_vector_store(budget, property_type, preference1, preference2, role)
+    vector_store = get_real_estate_vector_store(budget, property_type, area_range, preference1, preference2, role)
     if not vector_store:
         return []
     try:

@@ -7,6 +7,7 @@ from datetime import datetime
 class RealEstateConsultationBase(BaseModel):
     budget: str
     property_type: str
+    area_range: str
     preference1: str
     preference2: str
     rounds: int
@@ -63,6 +64,7 @@ class PropertySchema(PropertyBase):
 class RealEstateSearchRequest(BaseModel):
     budget: str
     property_type: str
+    area_range: str
     preference1: str
     preference2: str
     max_rounds: int = 1

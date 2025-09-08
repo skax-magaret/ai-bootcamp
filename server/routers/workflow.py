@@ -23,6 +23,7 @@ router = APIRouter(
 class RealEstateWorkflowRequest(BaseModel):
     budget: str
     property_type: str
+    area_range: str
     preference1: str
     preference2: str
     max_rounds: int = 3
@@ -63,6 +64,7 @@ async def real_estate_generator(real_estate_graph, initial_state, langfuse_handl
             docs = real_estate_state.get("docs", {})
             budget = real_estate_state.get("budget")
             property_type = real_estate_state.get("property_type")
+            area_range = real_estate_state.get("area_range")
             preference1 = real_estate_state.get("preference1")
             preference2 = real_estate_state.get("preference2")
             recommended_properties = real_estate_state.get("recommended_properties", [])
@@ -73,6 +75,7 @@ async def real_estate_generator(real_estate_graph, initial_state, langfuse_handl
                 "response": response,
                 "budget": budget,
                 "property_type": property_type,
+                "area_range": area_range,
                 "preference1": preference1,
                 "preference2": preference2,
                 "messages": messages,
@@ -98,6 +101,7 @@ async def real_estate_generator(real_estate_graph, initial_state, langfuse_handl
 async def stream_real_estate_workflow(request: RealEstateWorkflowRequest):
     budget = request.budget
     property_type = request.property_type
+    area_range = request.area_range
     preference1 = request.preference1
     preference2 = request.preference2
     max_rounds = request.max_rounds
@@ -109,6 +113,7 @@ async def stream_real_estate_workflow(request: RealEstateWorkflowRequest):
     initial_state: RealEstateState = {
         "budget": budget,
         "property_type": property_type,
+        "area_range": area_range,
         "preference1": preference1,
         "preference2": preference2,
         "messages": [],

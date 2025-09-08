@@ -11,6 +11,7 @@ class RealEstateConsultation(Base):
     id = Column(Integer, primary_key=True, index=True)
     budget = Column(String(100), nullable=False)  # 예산
     property_type = Column(String(50), nullable=False)  # 매물 유형
+    area_range = Column(String(50), nullable=False)  # 평형대
     preference1 = Column(String(100), nullable=False)  # 선호 조건1
     preference2 = Column(String(200), nullable=False)  # 선호 조건2
     rounds = Column(Integer, default=1)

@@ -23,6 +23,7 @@ class RealEstateState(TypedDict):
     # 사용자 요구사항
     budget: str  # 예산
     property_type: str  # 매물 유형
+    area_range: str  # 평형대
     preference1: str  # 선호 조건1
     preference2: str  # 선호 조건2
     

@@ -23,10 +23,17 @@ def render_input_form():
             key="ui_property_type",
         )
         
+        # 평형대 선택
+        area_range = st.selectbox(
+            label="평형대:",
+            options=["상관없음", "10평 이하", "10-20평", "20-30평", "30-40평", "40-50평", "50평 이상"],
+            key="ui_area_range",
+        )
+        
         # 선호 조건1 선택
         preference1 = st.selectbox(
             label="선호 조건1:",
-            options=["지하철역근처", "학교근처", "병원근처", "터미널", "마트", "학원"],
+            options=["지하철역근처", "학교근처", "병원근처", "터미널부근", "마트부근", "학원가"],
             key="ui_preference1",
         )
         

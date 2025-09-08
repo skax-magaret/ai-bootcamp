@@ -29,6 +29,7 @@ def process_event_data(event_data):
         response = data["response"]
         budget = data.get("budget", "")
         property_type = data.get("property_type", "")
+        area_range = data.get("area_range", "")
         preference1 = data.get("preference1", "")
         preference2 = data.get("preference2", "")
         messages = data["messages"]
@@ -65,6 +66,7 @@ def process_event_data(event_data):
             save_consultation(
                 budget,
                 property_type,
+                area_range,
                 preference1,
                 preference2,
                 max_rounds,
@@ -126,6 +128,7 @@ def start_search():
 
     budget = st.session_state.ui_budget
     property_type = st.session_state.ui_property_type
+    area_range = st.session_state.ui_area_range
     preference1 = st.session_state.ui_preference1
     preference2 = st.session_state.ui_preference2
     max_rounds = st.session_state.max_rounds
@@ -137,6 +140,7 @@ def start_search():
         data = {
             "budget": budget,
             "property_type": property_type,
+            "area_range": area_range,
             "preference1": preference1,
             "preference2": preference2,
             "max_rounds": max_rounds,
@@ -231,14 +235,17 @@ def display_search_results():
         st.info("📚 이전에 저장된 상담을 보고 있습니다.")
         budget = st.session_state.loaded_budget
         property_type = st.session_state.loaded_property_type
+        area_range = st.session_state.loaded_area_range
     else:
         budget = st.session_state.ui_budget
         property_type = st.session_state.ui_property_type
+        area_range = st.session_state.ui_area_range
 
     # 검색 조건 표시
     st.header(f"🏠 부동산 상담 결과")
     st.write(f"**예산:** {budget}")
     st.write(f"**매물 유형:** {property_type}")
+    st.write(f"**평형대:** {area_range}")
 
     for message in st.session_state.messages:
 

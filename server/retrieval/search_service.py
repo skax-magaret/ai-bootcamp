@@ -9,12 +9,13 @@ from utils.config import get_llm
 def improve_search_query(
     budget: str,
     property_type: str,
+    area_range: str,
     preference1: str,
     preference2: str,
     role: Literal["RATIONAL_AGENT", "EMOTIONAL_AGENT", "MEDIATOR_AGENT"] = "MEDIATOR_AGENT",
 ) -> List[str]:
 
-    template = "부동산 매물 검색을 위해 다음 조건에 맞는 3개의 검색어를 제안해주세요. 예산: {budget}, 매물유형: {property_type}, 선호조건1: {preference1}, 선호조건2: {preference2}. {perspective} 각 검색어는 25자 이내로 작성하고 콤마로 구분하세요. 검색어만 제공하고 설명은 하지 마세요."
+    template = "부동산 매물 검색을 위해 다음 조건에 맞는 3개의 검색어를 제안해주세요. 예산: {budget}, 매물유형: {property_type}, 평형대: {area_range}, 선호조건1: {preference1}, 선호조건2: {preference2}. {perspective} 각 검색어는 25자 이내로 작성하고 콤마로 구분하세요. 검색어만 제공하고 설명은 하지 마세요."
 
     perspective_map = {
         "RATIONAL_AGENT": "이성적이고 현실적인 관점에서 교통, 생활환경, 재정적 안정성을 중시하는 검색어를 제안해주세요.",
@@ -25,6 +26,7 @@ def improve_search_query(
     prompt = template.format(
         budget=budget, 
         property_type=property_type, 
+        area_range=area_range,
         preference1=preference1, 
         preference2=preference2,
         perspective=perspective_map[role]

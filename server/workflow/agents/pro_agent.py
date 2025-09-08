@@ -26,6 +26,7 @@ class RationalAgent(Agent):
             고객의 요구사항:
             - 예산: {state.get('budget', '')}
             - 매물 유형: {state.get('property_type', '')}
+            - 평형대: {state.get('area_range', '')}
             - 선호 조건1: {state.get('preference1', '')}
             - 선호 조건2: {state.get('preference2', '')}
             
@@ -49,6 +50,7 @@ class RationalAgent(Agent):
             고객의 요구사항:
             - 예산: {state.get('budget', '')}
             - 매물 유형: {state.get('property_type', '')}
+            - 평형대: {state.get('area_range', '')}
             - 선호 조건1: {state.get('preference1', '')}
             - 선호 조건2: {state.get('preference2', '')}
             

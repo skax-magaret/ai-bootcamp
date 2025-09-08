@@ -62,11 +62,12 @@ class Agent(ABC):
         real_estate_state = state["real_estate_state"]
         budget = real_estate_state["budget"]
         property_type = real_estate_state["property_type"]
+        area_range = real_estate_state["area_range"]
         preference1 = real_estate_state["preference1"]
         preference2 = real_estate_state["preference2"]
 
         # 검색 쿼리 생성
-        query = f"{budget} {property_type} {preference1} {preference2}"
+        query = f"{budget} {property_type} {area_range} {preference1} {preference2}"
         if self.role == AgentType.RATIONAL:
             query += " 교통편의성 생활환경 재정안정성"
         elif self.role == AgentType.EMOTIONAL:
@@ -75,7 +76,7 @@ class Agent(ABC):
             query += " 객관적 정보 시장동향 분석"
 
         # RAG 서비스를 통해 검색 실행
-        docs = search_real_estate(budget, property_type, preference1, preference2, self.role, query, k=self.k)
+        docs = search_real_estate(budget, property_type, area_range, preference1, preference2, self.role, query, k=self.k)
 
         real_estate_state["docs"][self.role] = (
             [doc.page_content for doc in docs] if docs else []
