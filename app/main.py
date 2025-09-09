@@ -69,7 +69,7 @@ def process_event_data(event_data):
                 area_range,
                 preference1,
                 preference2,
-                max_rounds,
+                current_round,
                 messages,
                 docs,
                 recommended_properties,

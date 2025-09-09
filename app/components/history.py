@@ -6,12 +6,12 @@ from utils.state_manager import reset_session_state
 
 # 포트 충돌 방지를 위해 환경변수 사용
 API_BASE_URL = os.getenv("API_BASE_URL")
-st.w
 
 # API로 부동산 상담 이력 조회
 def fetch_consultation_history():
     """API를 통해 부동산 상담 이력 가져오기"""
     try:
+        API_BASE_URL = os.getenv("API_BASE_URL")
         response = requests.get(f"{API_BASE_URL}/real-estate-consultations/")
         if response.status_code == 200:
             consultations = response.json()
@@ -33,6 +33,7 @@ def fetch_consultation_history():
 def fetch_consultation_by_id(consultation_id):
     """API를 통해 특정 상담 데이터 가져오기"""
     try:
+        API_BASE_URL = os.getenv("API_BASE_URL")
         response = requests.get(f"{API_BASE_URL}/real-estate-consultations/{consultation_id}")
         if response.status_code == 200:
             consultation = response.json()
@@ -73,6 +74,7 @@ def fetch_consultation_by_id(consultation_id):
 def delete_consultation_by_id(consultation_id):
     """API를 통해 특정 상담 삭제"""
     try:
+        API_BASE_URL = os.getenv("API_BASE_URL")
         response = requests.delete(f"{API_BASE_URL}/real-estate-consultations/{consultation_id}")
         if response.status_code == 200:
             st.success("상담이 삭제되었습니다.")
@@ -97,6 +99,7 @@ def delete_all_consultations():
         # 각 상담 항목 삭제
         success = True
         for consultation_id, _, _, _, _ in consultations:
+            API_BASE_URL = os.getenv("API_BASE_URL")
             response = requests.delete(f"{API_BASE_URL}/real-estate-consultations/{consultation_id}")
             if response.status_code != 200:
                 success = False
@@ -140,7 +143,7 @@ def save_consultation(budget, property_type, area_range, preference1, preference
                 else (additional_options or "[]")
             ),
         }
-
+        API_BASE_URL = os.getenv("API_BASE_URL")
         response = requests.post(f"{API_BASE_URL}/real-estate-consultations/", json=consultation_data)
 
         if response.status_code == 200 or response.status_code == 201:

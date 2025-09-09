@@ -1,6 +1,6 @@
-from workflow.agents.con_agent import EmotionalAgent
+from workflow.agents.emotional_agent import EmotionalAgent
 from workflow.agents.judge_agent import MediatorAgent
-from workflow.agents.pro_agent import RationalAgent
+from workflow.agents.rational_agent import RationalAgent
 from workflow.agents.round_manager import RoundManager
 from workflow.state import RealEstateState, AgentType
 from langgraph.graph import StateGraph, END
